@@ -1,5 +1,7 @@
 # NothingMusic
 
+![NothingMusic](cover.png)
+
 YouTube Music в отдельном окне. WinForms + WebView2, без вкладок браузера.
 
 ## Что внутри
