@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>ico.ico</ApplicationIcon>
+    <Nullable>enable</Nullable>
+    <AssemblyName>NothingMusic</AssemblyName>
+    <RootNamespace>NothingMusic</RootNamespace>
+    <Product>NothingMusic</Product>
+    <AssemblyTitle>NothingMusic</AssemblyTitle>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="minimize.png" />
+    <EmbeddedResource Include="close.png" />
+    <EmbeddedResource Include="ico.ico" />
+    <EmbeddedResource Include="audio-effects.js" />
+    <!-- Шрифт Pixelify Sans (SIL OFL) для пиксельных заголовков; без него — Segoe UI -->
+    <EmbeddedResource Include="PixelifySans.ttf" Condition="Exists('PixelifySans.ttf')" LogicalName="NothingMusic.PixelifySans.ttf" />
+    <!-- Необязательные картинки: положите settings.png / logo.png в папку проекта -->
+    <EmbeddedResource Include="settings.png" Condition="Exists('settings.png')" />
+    <EmbeddedResource Include="logo.png" Condition="Exists('logo.png')" />
+    <EmbeddedResource Include="tray.ico" Condition="Exists('tray.ico')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Microsoft.Web.WebView2.Core.dll">
+      <LogicalName>NothingMusic.Microsoft.Web.WebView2.Core.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Microsoft.Web.WebView2.WinForms.dll">
+      <LogicalName>NothingMusic.Microsoft.Web.WebView2.WinForms.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="WebView2Loader.dll">
+      <LogicalName>NothingMusic.WebView2Loader.dll</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
