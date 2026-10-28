@@ -1,6 +1,6 @@
 # NothingMusic
 
-![NothingMusic](cover.png)
+![NothingMusic](hero.gif)
 
 ## Что внутри
 
