@@ -376,6 +376,19 @@ namespace NothingMusic
             }
         }
 
+        protected override void WndProc(ref Message m)
+        {
+            // Повторный запуск приложения (ярлык на панели задач, exe из папки)
+            // просит показать уже работающее окно из трея
+            if (Program.ShowFromTrayMessage != 0 && m.Msg == (int)Program.ShowFromTrayMessage)
+            {
+                ShowFromTray();
+                return;
+            }
+
+            base.WndProc(ref m);
+        }
+
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
