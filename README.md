@@ -26,11 +26,3 @@
 ```
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
-
-## Иконки и шрифт
-
-В проекте лежат `logo.png`, `settings.png`, `ico.ico`, `tray.ico` - они вшиваются в exe при сборке. `logos.png` - исходник, из него собраны иконочные файлы.
-
-Заголовки набраны Pixelify Sans (SIL OFL, текст лицензии в `PixelifySans-OFL.txt`). Если убрать `PixelifySans.ttf`, интерфейс вернётся на Segoe UI.
-
-Лицензия - MIT.
