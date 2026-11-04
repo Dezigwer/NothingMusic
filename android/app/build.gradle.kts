@@ -3,9 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// Релизная подпись включается только если в окружении есть keystore.
-// CI собирает debug APK, который можно поставить на телефон как есть.
+// Релизная подпись включается, если в окружении есть keystore (CI-секреты).
+// Локально без keystore release собирается debug-ключом, чтобы APK всё равно
+// можно было поставить на телефон.
 val signingKeystore: String? = System.getenv("SIGNING_KEYSTORE")
+val hasSigningKey = signingKeystore != null
 
 android {
     namespace = "com.dezigwer.nothingmusic"
@@ -15,17 +17,19 @@ android {
         applicationId = "com.dezigwer.nothingmusic"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     signingConfigs {
-        if (signingKeystore != null) {
+        if (hasSigningKey) {
             create("release") {
-                storeFile = rootProject.file(signingKeystore)
+                storeFile = rootProject.file(signingKeystore!!)
                 storePassword = System.getenv("SIGNING_STORE_PASSWORD")
                 keyAlias = System.getenv("SIGNING_KEY_ALIAS")
                 keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                // Ключ сгенерирован как PKCS#12 (.p12), а не JKS.
+                storeType = "PKCS12"
             }
         }
     }
@@ -37,8 +41,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (signingKeystore != null) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasSigningKey) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
         }
     }

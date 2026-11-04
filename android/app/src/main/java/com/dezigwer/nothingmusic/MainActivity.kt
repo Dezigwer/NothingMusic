@@ -2,7 +2,6 @@ package com.dezigwer.nothingmusic
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -20,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : Activity() {
 
     private lateinit var container: FrameLayout
+    private var panel: SettingsPanel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,9 +60,7 @@ class MainActivity : Activity() {
             }
             contentDescription = getString(R.string.settings)
             setPadding(dp(11), dp(11), dp(11), dp(11))
-            setOnClickListener {
-                startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
-            }
+            setOnClickListener { openSettings() }
         }
         // поднимаем над мини-плеером YouTube Music, чтобы не перекрывать кнопки
         val gearParams = FrameLayout.LayoutParams(dp(44), dp(44), Gravity.END or Gravity.BOTTOM)
@@ -85,8 +83,47 @@ class MainActivity : Activity() {
         WebEngine.pushSettings()
     }
 
+    /** Настройки показываем оверлеем: WebView остаётся видимым, музыка не прерывается. */
+    private fun openSettings() {
+        if (panel != null) return
+        val created = SettingsPanel(this, ::closeSettings) { quitApp() }
+        created.alpha = 0f
+        panel = created
+        container.addView(
+            created,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
+        created.animate().alpha(1f).setDuration(150L).start()
+    }
+
+    private fun closeSettings() {
+        val current = panel ?: return
+        panel = null
+        current.animate()
+            .alpha(0f)
+            .setDuration(120L)
+            .withEndAction { container.removeView(current) }
+            .start()
+        WebEngine.pushSettings()
+    }
+
+    private fun quitApp() {
+        PlaybackService.stop(this)
+        WebEngine.destroy()
+        finishAffinity()
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        val openPanel = panel
+        if (openPanel != null) {
+            openPanel.close()
+            return
+        }
+
         val web = WebEngine.peek()
         if (web != null && web.canGoBack()) {
             web.goBack()

@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -73,6 +74,7 @@ class PlaybackService : Service() {
     private var artwork: Bitmap? = null
     private var fingerprint: String? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
     private var destroyed = false
 
     private val poll = object : Runnable {
@@ -185,9 +187,21 @@ class PlaybackService : Service() {
                     acquire(6 * 60 * 60 * 1000L)
                 }
             }
+            if (wifiLock == null) {
+                val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                wifiLock = wm.createWifiLock(
+                    WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                    "NothingMusic:wifi"
+                ).apply {
+                    setReferenceCounted(false)
+                    acquire()
+                }
+            }
         } else {
             wakeLock?.let { if (it.isHeld) it.release() }
             wakeLock = null
+            wifiLock?.let { if (it.isHeld) it.release() }
+            wifiLock = null
         }
     }
 

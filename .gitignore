@@ -6,3 +6,7 @@ dist/
 *.suo
 
 /build-artifacts/
+
+# Android signing material — никогда не коммитим
+release.p12
+ks-pass.txt

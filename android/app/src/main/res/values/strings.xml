@@ -23,7 +23,11 @@
     <string name="reset">СБРОСИТЬ ЭФФЕКТЫ</string>
     <string name="quit">ЗАКРЫТЬ ПРИЛОЖЕНИЕ</string>
 
-    <string name="footer_note">Вход в Google может потребовать браузер: если страница входа ругается на WebView, включите десктопную версию. Эффекты применяются на лету, перезапускать трек не нужно.</string>
+    <string name="battery">Батарея</string>
+    <string name="battery_ok">без ограничений</string>
+    <string name="battery_allow">разрешить фон</string>
+
+    <string name="footer_note">Настройки открываются поверх плеера, музыка продолжает играть. Если звук останавливается при выключенном экране — нажмите «разрешить фон» выше и отключите оптимизацию батареи для NothingMusic.</string>
 
     <string name="play">Играть</string>
     <string name="pause">Пауза</string>

@@ -7,3 +7,6 @@ captures/
 .externalNativeBuild/
 .cxx/
 release.keystore
+release.p12
+*.jks
+*.keystore
