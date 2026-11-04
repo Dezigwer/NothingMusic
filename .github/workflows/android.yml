@@ -39,6 +39,14 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0" "platform-tools" > /dev/null
 
+      # Один и тот же debug-ключ между сборками: иначе новый APK нельзя
+      # поставить поверх старого (разные подписи).
+      - name: Cache debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: nothingmusic-debug-keystore-v1
+
       - name: Build debug APK
         run: |
           chmod +x gradlew
