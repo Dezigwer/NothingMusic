@@ -22,7 +22,7 @@ android {
     signingConfigs {
         if (signingKeystore != null) {
             create("release") {
-                storeFile = file(signingKeystore)
+                storeFile = rootProject.file(signingKeystore)
                 storePassword = System.getenv("SIGNING_STORE_PASSWORD")
                 keyAlias = System.getenv("SIGNING_KEY_ALIAS")
                 keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
