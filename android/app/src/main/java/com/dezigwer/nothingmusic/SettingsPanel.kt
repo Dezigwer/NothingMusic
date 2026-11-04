@@ -10,7 +10,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
-import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -352,7 +351,7 @@ class SettingsPanel(
                     try {
                         context.startActivity(
                             Intent(
-                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                                 Uri.parse("package:${context.packageName}")
                             )
                         )
@@ -360,7 +359,7 @@ class SettingsPanel(
                         // некоторые прошивки не поддерживают этот диалог
                         try {
                             context.startActivity(
-                                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                             )
                         } catch (ignored: Exception) {
                         }

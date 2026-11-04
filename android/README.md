@@ -6,11 +6,11 @@
 
 ## Скачать
 
-Готовый APK: **[NothingMusic 1.0.0 для Android](https://github.com/Dezigwer/NothingMusic/releases/tag/android-v1.0.0)**
+Готовый APK: **[NothingMusic 1.0.1 для Android](https://github.com/Dezigwer/NothingMusic/releases/tag/android-v1.0.1)**
 
 APK универсальный — внутри нет нативных библиотек, поэтому один файл
 подходит для `arm64-v8a`, `armeabi-v7a` и `x86_64`. Минимальная версия —
-Android 8.0 (API 26).
+Android 8.0 (API 26). Сборка подписана релизным ключом (не debug).
 
 Десктопное приложение лежит в корне репозитория и не затрагивается — Android
 живёт отдельно в этой папке.
@@ -22,9 +22,13 @@ Android 8.0 (API 26).
 - Эквалайзер: бас / средние / верхние, −12…+12 дБ.
 - «Под водой» с глубиной и реверберация.
 - Эффекты применяются на лету, трек перезапускать не нужно.
+- Настройки открываются оверлеем поверх плеера: музыка продолжает играть,
+  пока крутится эквалайзер.
 - Настройки сохраняются между запусками.
-- Фоновое воспроизведение: foreground-сервис, wake lock, уведомление с
-  play/pause, переключением треков и обложкой.
+- Фоновое воспроизведение: foreground-сервис, wake lock + Wi-Fi lock,
+  уведомление с play/pause, переключением треков и обложкой.
+- Иконка приложения — та же нота, что у десктопной версии (adaptive icon,
+  тема Pixelify Sans).
 - Медиа-сессия: управление с экрана блокировки, часов и наушников.
 - Назад: история WebView, а с главной — уход в фон (как трей на Windows).
 
@@ -36,9 +40,10 @@ Workflow `.github/workflows/android.yml` собирает APK на каждый 
 `main`/`android` при изменениях в `android/`.
 
 1. Откройте вкладку **Actions** → **Android APK** → последний запуск.
-2. Скачайте артефакт **NothingMusic-debug**.
-3. Внутри `app-debug.apk` — ставится на телефон как обычный APK
-   (нужно разрешить установку из неизвестных источников).
+2. Скачайте артефакт **NothingMusic-release** (подписанный) или
+   **NothingMusic-debug**.
+3. Внутри `app-release.apk` / `app-debug.apk` — ставится на телефон как
+   обычный APK (нужно разрешить установку из неизвестных источников).
 
 ### Локально
 
@@ -59,17 +64,29 @@ cd android
 
 ### Подписанный release
 
-Добавьте в репозиторий секреты:
+Подпись включается автоматически, если в окружении есть `SIGNING_KEYSTORE`.
+В CI ключ лежит в секретах:
 
 | Секрет | Значение |
 | --- | --- |
-| `SIGNING_KEYSTORE_BASE64` | keystore, закодированный в base64 |
+| `SIGNING_KEYSTORE_BASE64` | ключ (PKCS#12), закодированный в base64 |
 | `SIGNING_STORE_PASSWORD` | пароль хранилища |
-| `SIGNING_KEY_ALIAS` | alias ключа |
+| `SIGNING_KEY_ALIAS` | alias ключа (`nothingmusic`) |
 | `SIGNING_KEY_PASSWORD` | пароль ключа |
 
-Затем поставьте тег `v1.0.0` — соберётся `NothingMusic-release`.
-Без секретов release APK соберётся неподписанным.
+Workflow декодирует ключ в `release.p12`, собирает `assembleDebug
+assembleRelease` и загружает оба APK. Без секретов release APK подпишется
+debug-ключом, чтобы его всё равно можно было установить.
+
+Локально:
+
+```bash
+SIGNING_KEYSTORE=release.p12 \
+SIGNING_STORE_PASSWORD=… SIGNING_KEY_ALIAS=nothingmusic \
+SIGNING_KEY_PASSWORD=… ./gradlew assembleRelease
+```
+
+Сам ключ и пароли в репозиторий не попадают — они в `.gitignore`.
 
 ## Структура
 
@@ -81,7 +98,7 @@ android/
     assets/fonts/PixelifySans.ttf
     java/com/dezigwer/nothingmusic/
       MainActivity.kt              # WebView + кнопка настроек
-      SettingsActivity.kt          # экран настроек
+      SettingsPanel.kt            # настройки оверлеем поверх плеера
       WebEngine.kt                 # один WebView на всё приложение
       PlaybackService.kt           # foreground-сервис, медиа-сессия, уведомление
       Settings.kt                  # настройки в SharedPreferences
