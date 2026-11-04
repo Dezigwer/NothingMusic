@@ -26,3 +26,11 @@
 ```
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
+
+## Android
+
+В папке [`android/`](android/) — мобильная версия: тот же `audio-effects.js`,
+WebView с YouTube Music, foreground-сервис и уведомление вместо трея.
+APK собирается через GitHub Actions (артефакт `NothingMusic-debug`).
+
+Подробности, сборка и ограничения: [`android/README.md`](android/README.md).
