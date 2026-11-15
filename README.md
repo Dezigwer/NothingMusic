@@ -1,6 +1,6 @@
 # NothingMusic
 
-![NothingMusic](hero.gif)
+![NothingMusic]
 
 ## Что внутри
 
