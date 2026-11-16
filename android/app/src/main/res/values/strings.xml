@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NothingMusic</string>
+    <string name="subtitle">YOUTUBE MUSIC · ANDROID</string>
+
+    <string name="settings">Настройки</string>
+    <string name="done">ГОТОВО</string>
+
+    <string name="section_speed">СКОРОСТЬ</string>
+    <string name="section_eq">ЭКВАЛАЙЗЕР</string>
+    <string name="section_effects">ЭФФЕКТЫ</string>
+    <string name="section_app">ПРИЛОЖЕНИЕ</string>
+
+    <string name="speed">Скорость</string>
+    <string name="preserve_pitch">Сохранять питч</string>
+    <string name="bass">Бас</string>
+    <string name="mid">Средние</string>
+    <string name="treble">Верхние</string>
+    <string name="underwater">Под водой</string>
+    <string name="underwater_depth">Глубина</string>
+    <string name="reverb">Реверберация</string>
+    <string name="desktop_site">Десктопная версия</string>
+    <string name="reset">СБРОСИТЬ ЭФФЕКТЫ</string>
+    <string name="quit">ЗАКРЫТЬ ПРИЛОЖЕНИЕ</string>
+
+    <string name="battery">Батарея</string>
+    <string name="battery_ok">без ограничений</string>
+    <string name="battery_allow">разрешить фон</string>
+
+    <string name="footer_note">Настройки открываются поверх плеера, музыка продолжает играть. Если звук останавливается при выключенном экране — нажмите «разрешить фон» выше и отключите оптимизацию батареи для NothingMusic.</string>
+
+    <string name="play">Играть</string>
+    <string name="pause">Пауза</string>
+    <string name="next">Следующий</string>
+    <string name="previous">Предыдущий</string>
+    <string name="close">Закрыть</string>
+
+    <string name="channel_playback">Воспроизведение</string>
+    <string name="channel_playback_desc">Управление музыкой NothingMusic</string>
+</resources>
