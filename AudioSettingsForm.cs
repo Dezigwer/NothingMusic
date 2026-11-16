@@ -325,6 +325,16 @@ namespace NothingMusic
                 v => _settings.WindowTitle = v,
                 () => _settings.WindowTitle);
 
+            AddSlider("Зона колеса у ползунка", 8, 60, 1,
+                v => Math.Round(v) + " px",
+                v =>
+                {
+                    _settings.SliderWheelZone = (int)Math.Round(v);
+                    foreach (var pair in _sliderSync)
+                        pair.Slider.WheelZoneSize = _settings.SliderWheelZone;
+                },
+                () => _settings.SliderWheelZone);
+
             _y += 14;
             AddSiteSection();
 
@@ -638,7 +648,8 @@ namespace NothingMusic
                 Location = new Point(LeftMargin, _y + 20),
                 AccentColor = Accent,
                 AccentColor2 = Accent2,
-                BackColor = Bg
+                BackColor = Bg,
+                WheelZoneSize = _settings.SliderWheelZone
             };
 
             value.Text = format(slider.Value);

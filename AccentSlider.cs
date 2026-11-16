@@ -52,6 +52,10 @@ namespace NothingMusic
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color ThumbColor { get; set; } = Color.FromArgb(16, 16, 16);
 
+        /// <summary>Размер зоны вокруг ползунка, в которой колесо мыши меняет значение (пиксели).</summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int WheelZoneSize { get; set; } = 22;
+
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public double Minimum
         {
@@ -219,6 +223,47 @@ namespace NothingMusic
             base.OnMouseLeave(e);
             _hover = false;
             if (!_dragging) Invalidate();
+        }
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            // нужно для получения событий колеса мыши
+            if (CanFocus) Focus();
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            // пока курсор над слайдером, не прокручиваем родительскую панель
+            if (e is HandledMouseEventArgs handled)
+                handled.Handled = true;
+
+            double deltaStep = _step > 0 ? _step : (_maximum - _minimum) / 50.0;
+            if (deltaStep <= 0) return;
+
+            int direction = Math.Sign(e.Delta);
+            if (direction == 0) return;
+
+            // колесо вверх увеличивает значение (по всему слайдеру)
+            SetValue(_value + direction * deltaStep, true);
+        }
+
+        private bool IsThumbWheelZone(Point location)
+        {
+            int trackHeight = 6;
+            int cy = Height / 2;
+            var trackRect = new Rectangle(SidePadding, cy - trackHeight / 2,
+                Math.Max(trackHeight, Width - SidePadding * 2), trackHeight);
+
+            double ratio = _maximum > _minimum ? (_value - _minimum) / (_maximum - _minimum) : 0;
+            ratio = Math.Clamp(ratio, 0, 1);
+            int thumbX = trackRect.X + (int)Math.Round(trackRect.Width * ratio);
+
+            int zoneSize = Math.Max(8, WheelZoneSize);
+            // вертикальная полоса под/вокруг ползунка: так прокрутка не "срывается",
+            // когда бегунок смещается, и зона остаётся компактной по ширине
+            var zone = new Rectangle(thumbX - zoneSize, 0, zoneSize * 2, Math.Max(1, Height));
+            return zone.Contains(location);
         }
     }
 }

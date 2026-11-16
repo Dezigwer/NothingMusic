@@ -30,6 +30,9 @@ namespace NothingMusic
         // --- сайт, открытый в окне ---
         public string SiteUrl { get; set; } = DefaultSiteUrl;
 
+        // --- интерфейс ---
+        public int SliderWheelZone { get; set; } = 22; // размер зоны у ползунка для прокрутки колесом
+
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -53,6 +56,7 @@ namespace NothingMusic
             WindowTitle = (WindowTitle ?? "").Trim();
             if (WindowTitle.Length > 80) WindowTitle = WindowTitle.Substring(0, 80);
             SiteUrl = NormalizeUrl(SiteUrl);
+            SliderWheelZone = Math.Clamp(SliderWheelZone, 8, 60);
             return this;
         }
 
