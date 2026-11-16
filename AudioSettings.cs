@@ -11,6 +11,8 @@ namespace NothingMusic
     /// </summary>
     internal sealed class AudioSettings
     {
+        public const string DefaultSiteUrl = "https://music.youtube.com";
+
         public double Speed { get; set; } = 1.0;          // 0.5 .. 2.0
         public bool PreservePitch { get; set; } = true;   // не делать "бурундука"
         public double Bass { get; set; } = 0;             // дБ, -12 .. 12
@@ -24,6 +26,9 @@ namespace NothingMusic
         public bool NativeTitleBar { get; set; } = false; // системный заголовок Windows
         public bool DarkTitleBar { get; set; } = true;    // тёмная системная рамка
         public string WindowTitle { get; set; } = "";     // своё название окна ("" — без надписи)
+
+        // --- сайт, открытый в окне ---
+        public string SiteUrl { get; set; } = DefaultSiteUrl;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -47,7 +52,42 @@ namespace NothingMusic
             Reverb = Math.Clamp(Reverb, 0, 1);
             WindowTitle = (WindowTitle ?? "").Trim();
             if (WindowTitle.Length > 80) WindowTitle = WindowTitle.Substring(0, 80);
+            SiteUrl = NormalizeUrl(SiteUrl);
             return this;
+        }
+
+        /// <summary>
+        /// Приводит адрес к виду https://host/... Всё, что не похоже на http(s)-ссылку,
+        /// заменяется на сайт по умолчанию.
+        /// </summary>
+        public static string NormalizeUrl(string? url)
+        {
+            return TryNormalizeUrl(url, out string normalized) ? normalized : DefaultSiteUrl;
+        }
+
+        public static bool TryNormalizeUrl(string? url, out string normalized)
+        {
+            normalized = DefaultSiteUrl;
+            url = (url ?? "").Trim();
+
+            if (url.Length == 0)
+                return false;
+
+            if (!url.Contains("://", StringComparison.Ordinal))
+                url = "https://" + url;
+
+            if (url.Length > 2048)
+                url = url.Substring(0, 2048);
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
+                string.IsNullOrWhiteSpace(uri.Host))
+            {
+                return false;
+            }
+
+            normalized = uri.ToString();
+            return true;
         }
 
         public void CopyFrom(AudioSettings other)
@@ -60,6 +100,7 @@ namespace NothingMusic
             Underwater = other.Underwater;
             UnderwaterDepth = other.UnderwaterDepth;
             Reverb = other.Reverb;
+            SiteUrl = other.SiteUrl;
         }
 
         public static AudioSettings Load()

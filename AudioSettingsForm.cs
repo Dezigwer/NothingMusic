@@ -40,13 +40,24 @@ namespace NothingMusic
         private const int HeaderHeight = 48;
         private const int AnimFrames = 14;
 
+        private static readonly (string Name, string Url)[] SitePresets =
+        {
+            ("YouTube", "https://www.youtube.com"),
+            ("YouTube Music", "https://music.youtube.com"),
+            ("Яндекс Музыка", "https://music.yandex.ru"),
+            ("SoundCloud", "https://soundcloud.com")
+        };
+
         private readonly AudioSettings _settings;
         private readonly Panel _content;
         private readonly List<(AccentSlider Slider, Func<double> Get)> _sliderSync = new();
         private readonly List<(ToggleSwitch Box, Func<bool> Get)> _checkSync = new();
         private readonly List<(TextBox Box, Func<string> Get)> _textSync = new();
+        private readonly List<(Button Button, string Url)> _siteButtons = new();
         private readonly System.Windows.Forms.Timer _animTimer = new() { Interval = 15 };
 
+        private TextBox? _siteBox;
+        private Label? _siteHint;
         private bool _suppress;
         private bool _hiding;
         private int _animStep;
@@ -54,6 +65,7 @@ namespace NothingMusic
         private Point _slideTarget;
 
         public event Action<AudioSettings>? SettingsChanged;
+        public event Action<string>? SiteRequested;
 
         public AudioSettingsForm(AudioSettings settings)
         {
@@ -77,7 +89,8 @@ namespace NothingMusic
                 Size = new Size(ClientSize.Width, ClientSize.Height - HeaderHeight),
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 BackColor = Bg,
-                AutoScroll = false
+                AutoScroll = true,
+                AutoScrollMargin = new Size(0, 16)
             };
             Controls.Add(_content);
 
@@ -311,6 +324,220 @@ namespace NothingMusic
             AddTextBox("Название окна", _settings.WindowTitle,
                 v => _settings.WindowTitle = v,
                 () => _settings.WindowTitle);
+
+            _y += 14;
+            AddSiteSection();
+
+            _content.AutoScrollMinSize = new Size(0, _y + 16);
+        }
+
+        private void AddSiteSection()
+        {
+            AddSection("ВКЛАДКИ");
+
+            const int gap = 8;
+            const int buttonHeight = 32;
+            int buttonWidth = (ContentWidth - gap) / 2;
+
+            for (int i = 0; i < SitePresets.Length; i++)
+            {
+                var preset = SitePresets[i];
+                int column = i % 2;
+                int row = i / 2;
+
+                var button = new Button
+                {
+                    Text = preset.Name,
+                    Size = new Size(buttonWidth, buttonHeight),
+                    Location = new Point(LeftMargin + column * (buttonWidth + gap),
+                        _y + row * (buttonHeight + gap)),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Card,
+                    ForeColor = TextColor,
+                    Font = new Font("Segoe UI", 8.5f),
+                    Cursor = Cursors.Hand,
+                    TabStop = false,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                button.FlatAppearance.BorderSize = 1;
+                button.FlatAppearance.BorderColor = Border;
+                button.FlatAppearance.MouseOverBackColor = Color.FromArgb(42, 42, 42);
+                button.FlatAppearance.MouseDownBackColor = Color.FromArgb(52, 52, 52);
+
+                string url = preset.Url;
+                button.Click += (s, e) => ApplySite(url, true);
+
+                _content.Controls.Add(button);
+                _siteButtons.Add((button, url));
+            }
+
+            int rows = (SitePresets.Length + 1) / 2;
+            _y += rows * buttonHeight + (rows - 1) * gap + 12;
+
+            var caption = new Label
+            {
+                Text = "Изменить окно",
+                ForeColor = Dim,
+                Font = new Font("Segoe UI", 8.5f),
+                AutoSize = false,
+                Width = ContentWidth,
+                Height = 18,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Location = new Point(LeftMargin, _y),
+                BackColor = Bg
+            };
+
+            _siteBox = new TextBox
+            {
+                Text = _settings.SiteUrl,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.FromArgb(24, 24, 24),
+                ForeColor = TextColor,
+                Font = new Font("Segoe UI", 9f),
+                Width = ContentWidth - 72,
+                Location = new Point(LeftMargin, _y + 20),
+                PlaceholderText = "https://..."
+            };
+            _siteBox.TextChanged += (s, e) =>
+            {
+                if (!_suppress && _siteHint != null)
+                    _siteHint.Text = "";
+            };
+            _siteBox.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode != Keys.Enter) return;
+                e.SuppressKeyPress = true;
+                ApplySite(_siteBox.Text, true);
+            };
+
+            var openButton = new Button
+            {
+                Text = "Перейти",
+                Size = new Size(66, 26),
+                Location = new Point(LeftMargin + ContentWidth - 66, _y + 20),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Card,
+                ForeColor = TextColor,
+                Font = new Font("Segoe UI", 8.5f),
+                Cursor = Cursors.Hand,
+                TabStop = false
+            };
+            openButton.FlatAppearance.BorderSize = 1;
+            openButton.FlatAppearance.BorderColor = Border;
+            openButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(42, 42, 42);
+            openButton.FlatAppearance.MouseDownBackColor = Color.FromArgb(52, 52, 52);
+            openButton.Click += (s, e) => ApplySite(_siteBox.Text, true);
+
+            _siteHint = new Label
+            {
+                Text = "",
+                ForeColor = Color.FromArgb(224, 104, 104),
+                Font = new Font("Segoe UI", 8f),
+                AutoSize = false,
+                Width = ContentWidth,
+                Height = 16,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Location = new Point(LeftMargin, _y + 50),
+                BackColor = Bg
+            };
+
+            var note = new Label
+            {
+                Text = "На большинстве сайтов работают все эффекты. На DRM-защищённых — только скорость и питч.",
+                ForeColor = Dim,
+                Font = new Font("Segoe UI", 8f),
+                AutoSize = false,
+                Width = ContentWidth,
+                Height = 30,
+                TextAlign = ContentAlignment.TopLeft,
+                Location = new Point(LeftMargin, _y + 68),
+                BackColor = Bg
+            };
+
+            _content.Controls.Add(caption);
+            _content.Controls.Add(_siteBox);
+            _content.Controls.Add(openButton);
+            _content.Controls.Add(_siteHint);
+            _content.Controls.Add(note);
+
+            _y += 20 + 26 + 18 + 30 + 8;
+            UpdateSiteButtons();
+        }
+
+        private void ApplySite(string? rawUrl, bool navigate)
+        {
+            if (!AudioSettings.TryNormalizeUrl(rawUrl, out string url))
+            {
+                if (_siteHint != null)
+                    _siteHint.Text = "Введите адрес вида https://...";
+                return;
+            }
+
+            _settings.SiteUrl = url;
+
+            if (_siteBox != null && _siteBox.Text != url)
+                _siteBox.Text = url;
+
+            if (_siteHint != null)
+                _siteHint.Text = "";
+
+            UpdateSiteButtons(url);
+            RaiseChanged();
+
+            if (navigate)
+                SiteRequested?.Invoke(url);
+        }
+
+        private void UpdateSiteButtons(string? url = null)
+        {
+            string host = HostOf(url ?? _settings.SiteUrl);
+
+            foreach (var (button, siteUrl) in _siteButtons)
+            {
+                bool active = SiteMatches(host, siteUrl);
+                button.BackColor = active ? Accent : Card;
+                button.ForeColor = active ? Color.FromArgb(16, 16, 16) : TextColor;
+                button.FlatAppearance.BorderColor = active ? Accent : Border;
+                button.FlatAppearance.MouseOverBackColor = active ? Accent2 : Color.FromArgb(42, 42, 42);
+                button.FlatAppearance.MouseDownBackColor = active ? Accent2 : Color.FromArgb(52, 52, 52);
+            }
+        }
+
+        private static string HostOf(string? url)
+        {
+            if (!AudioSettings.TryNormalizeUrl(url, out string normalized))
+                return "";
+
+            return Uri.TryCreate(normalized, UriKind.Absolute, out Uri? uri)
+                ? uri.Host.ToLowerInvariant()
+                : "";
+        }
+
+        private static bool SiteMatches(string host, string siteUrl)
+        {
+            if (string.IsNullOrEmpty(host) ||
+                !Uri.TryCreate(siteUrl, UriKind.Absolute, out Uri? preset))
+            {
+                return false;
+            }
+
+            string presetHost = preset.Host.ToLowerInvariant();
+            if (host == presetHost)
+                return true;
+
+            return presetHost switch
+            {
+                "www.youtube.com" => host == "youtube.com" ||
+                                     (host.EndsWith(".youtube.com", StringComparison.Ordinal) &&
+                                      host != "music.youtube.com"),
+                "music.youtube.com" => host == "music.youtube.com",
+                "music.yandex.ru" => host.EndsWith(".yandex.ru", StringComparison.Ordinal) ||
+                                     host.EndsWith(".yandex.com", StringComparison.Ordinal) ||
+                                     host.EndsWith(".yandex.by", StringComparison.Ordinal) ||
+                                     host.EndsWith(".yandex.kz", StringComparison.Ordinal),
+                "soundcloud.com" => host == "soundcloud.com" || host.EndsWith(".soundcloud.com", StringComparison.Ordinal),
+                _ => false
+            };
         }
 
         private void AddTextBox(string caption, string initial, Action<string> setter, Func<string> getter)
@@ -469,6 +696,9 @@ namespace NothingMusic
                 box.Checked = get();
             foreach (var (box, get) in _textSync)
                 box.Text = get() ?? string.Empty;
+            if (_siteBox != null)
+                _siteBox.Text = _settings.SiteUrl;
+            UpdateSiteButtons();
             _suppress = false;
         }
 

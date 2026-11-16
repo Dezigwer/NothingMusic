@@ -650,7 +650,11 @@ namespace NothingMusic
             {
                 var env = await CoreWebView2Environment.CreateAsync(
                     browserExecutableFolder: null,
-                    userDataFolder: userDataFolder
+                    userDataFolder: userDataFolder,
+                    options: new CoreWebView2EnvironmentOptions(
+                        string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("NOTHINGMUSIC_DEBUG_PORT"))
+                            ? null
+                            : "--remote-debugging-port=" + Environment.GetEnvironmentVariable("NOTHINGMUSIC_DEBUG_PORT"))
                 );
 
                 webView = new WebView2
@@ -688,7 +692,7 @@ namespace NothingMusic
                 };
                 audioSyncTimer.Start();
 
-                webView.CoreWebView2.Navigate("https://music.youtube.com");
+                webView.CoreWebView2.Navigate(AudioSettings.NormalizeUrl(audioSettings.SiteUrl));
             }
             catch (Exception ex)
             {
@@ -711,16 +715,29 @@ namespace NothingMusic
             if (string.IsNullOrWhiteSpace(url))
                 return;
 
-            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            if (!url.Contains("://", StringComparison.Ordinal) &&
+                !url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) &&
+                !url.StartsWith("tel:", StringComparison.OrdinalIgnoreCase))
             {
                 url = "https://" + url;
+            }
+
+            // Наружу отдаём только безопасные схемы: file:, javascript: и подобные
+            // из чужой страницы открывать в системе нельзя.
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? external) ||
+                (external.Scheme != Uri.UriSchemeHttp &&
+                 external.Scheme != Uri.UriSchemeHttps &&
+                 external.Scheme != Uri.UriSchemeMailto &&
+                 external.Scheme != "tel"))
+            {
+                return;
             }
 
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = url,
+                    FileName = external.AbsoluteUri,
                     UseShellExecute = true
                 });
             }
@@ -743,10 +760,14 @@ namespace NothingMusic
 
         private void WebView_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
-            if (!e.Uri.Contains("music.youtube.com") && 
-                !e.Uri.Contains("youtube.com") &&
-                !e.Uri.Contains("accounts.google.com") &&
-                !e.Uri.Contains("google.com"))
+            // about:blank — это ещё не страница, её не трогаем
+            if (e.Uri.StartsWith("about:", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // В окне можно открыть любой http(s)-сайт: вкладки YouTube,
+            // YouTube Music, Яндекс Музыки, SoundCloud или свой адрес.
+            if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out Uri? uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
                 e.Cancel = true;
                 OpenInDefaultBrowser(e.Uri);
@@ -791,6 +812,7 @@ namespace NothingMusic
             {
                 settingsForm = new AudioSettingsForm(audioSettings);
                 settingsForm.SettingsChanged += OnAudioSettingsChanged;
+                settingsForm.SiteRequested += NavigateToSite;
                 settingsForm.Owner = this;
             }
 
@@ -824,6 +846,26 @@ namespace NothingMusic
 
             if (audioBridge != null)
                 await audioBridge.PushAsync(settings);
+        }
+
+        /// <summary>Переключает сайт в окне (вкладки YouTube/YouTube Music/Яндекс Музыка/SoundCloud или свой URL).</summary>
+        private void NavigateToSite(string url)
+        {
+            string target = AudioSettings.NormalizeUrl(url);
+            audioSettings.SiteUrl = target;
+            audioSettings.Save();
+
+            if (webView?.CoreWebView2 == null)
+                return;
+
+            try
+            {
+                webView.CoreWebView2.Navigate(target);
+            }
+            catch
+            {
+                // WebView может быть занят навигацией — повторный клик просто попробует снова
+            }
         }
     }
 }

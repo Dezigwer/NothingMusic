@@ -220,12 +220,5 @@ namespace NothingMusic
             _hover = false;
             if (!_dragging) Invalidate();
         }
-
-        protected override void OnMouseWheel(MouseEventArgs e)
-        {
-            base.OnMouseWheel(e);
-            double step = _step > 0 ? _step : (_maximum - _minimum) / 20.0;
-            Value = _value + Math.Sign(e.Delta) * step;
-        }
     }
 }
